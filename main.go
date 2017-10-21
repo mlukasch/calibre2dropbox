@@ -8,6 +8,7 @@ import (
 	"os/user"
 	"path/filepath"
 	"strconv"
+	"strings"
 	"sync"
 	"time"
 )
@@ -19,13 +20,17 @@ func main() {
 	fmt.Println("Bitte Zielordner in Dropbox angeben:")
 	reader := bufio.NewReader(os.Stdin)
 	input, _, _ := reader.ReadLine()
-	destFolderName := string(input)
+	destFolderName := strings.TrimSpace(string(input))
 	fmt.Println()
-	fmt.Println("Bitte Delta in min angeben: 60 (default)")
+	fmt.Println("Bitte Delta in min angeben für Pdfs, die kopiert werden sollen: 60 (default)")
 	input, _, _ = reader.ReadLine()
-	deltaInMins, err := strconv.ParseInt(string(input), 0, 0)
-	if err != nil {
-		panic(err)
+	deltaInMins := 60
+	if delta := strings.TrimSpace(string(input)); len(delta) != 0 {
+		deltaInt64, err := strconv.ParseInt(delta, 0, 0)
+		if err != nil {
+			panic(err)
+		}
+		deltaInMins = int(deltaInt64)
 	}
 	fmt.Println()
 
@@ -46,7 +51,7 @@ func pdfFilesProducer(pdfFiles chan string, deltaInMins int) {
 	user, _ := user.Current()
 	homeDir := user.HomeDir
 	calibreDir := filepath.Join(homeDir, "Calibre Library")
-	filepath.Walk(calibreDir, createWalkFunc(pdfFiles))
+	filepath.Walk(calibreDir, createWalkFunc(pdfFiles, deltaInMins))
 }
 
 func createWalkFunc(pdfFiles chan string, deltaInMins int) filepath.WalkFunc {
@@ -54,7 +59,7 @@ func createWalkFunc(pdfFiles chan string, deltaInMins int) filepath.WalkFunc {
 	return func(path string, info os.FileInfo, err error) error {
 		if filepath.Ext(path) == ".pdf" {
 			fileInfo, _ := os.Stat(path)
-			if time.Now().Sub(fileInfo.ModTime()) < deltaInMins*time.Minute {
+			if time.Now().Sub(fileInfo.ModTime()) < time.Duration(deltaInMins)*time.Minute {
 				fmt.Printf("+ Copying %s to Dropbox\n", fileInfo.Name())
 				pdfFiles <- path
 			}
