@@ -26,11 +26,11 @@ func main() {
 	input, _, _ = reader.ReadLine()
 	deltaInMins := 60
 	if delta := strings.TrimSpace(string(input)); len(delta) != 0 {
-		deltaInt64, err := strconv.ParseInt(delta, 0, 0)
+		var err error
+		deltaInMins, err = strconv.Atoi(delta)
 		if err != nil {
 			panic(err)
 		}
-		deltaInMins = int(deltaInt64)
 	}
 	fmt.Println()
 
