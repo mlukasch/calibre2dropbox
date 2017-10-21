@@ -74,7 +74,7 @@ func consumePdfFiles(pdfFiles chan string, destFolderName string, wg *sync.WaitG
 		outputFolder := filepath.Join(user.HomeDir, "Dropbox", destFolderName)
 
 		err := os.Mkdir(outputFolder, 0755)
-		if err != nil && os.IsNotExist(err) {
+		if err != nil {
 			panic(err)
 		}
 
