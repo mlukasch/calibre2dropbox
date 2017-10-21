@@ -7,6 +7,7 @@ import (
 	"os"
 	"os/user"
 	"path/filepath"
+	"strconv"
 	"sync"
 	"time"
 )
@@ -19,9 +20,17 @@ func main() {
 	reader := bufio.NewReader(os.Stdin)
 	input, _, _ := reader.ReadLine()
 	destFolderName := string(input)
+	fmt.Println()
+	fmt.Println("Bitte Delta in min angeben: 60 (default)")
+	input, _, _ = reader.ReadLine()
+	deltaInMins, err := strconv.ParseInt(string(input), 0, 0)
+	if err != nil {
+		panic(err)
+	}
+	fmt.Println()
 
 	pdfFiles := make(chan string)
-	go pdfFilesProducer(pdfFiles)
+	go pdfFilesProducer(pdfFiles, int(deltaInMins))
 
 	var wg sync.WaitGroup
 	wg.Add(4)
@@ -32,7 +41,7 @@ func main() {
 	wg.Wait()
 }
 
-func pdfFilesProducer(pdfFiles chan string) {
+func pdfFilesProducer(pdfFiles chan string, deltaInMins int) {
 	defer close(pdfFiles)
 	user, _ := user.Current()
 	homeDir := user.HomeDir
@@ -40,12 +49,12 @@ func pdfFilesProducer(pdfFiles chan string) {
 	filepath.Walk(calibreDir, createWalkFunc(pdfFiles))
 }
 
-func createWalkFunc(pdfFiles chan string) filepath.WalkFunc {
+func createWalkFunc(pdfFiles chan string, deltaInMins int) filepath.WalkFunc {
 
 	return func(path string, info os.FileInfo, err error) error {
 		if filepath.Ext(path) == ".pdf" {
 			fileInfo, _ := os.Stat(path)
-			if time.Now().Sub(fileInfo.ModTime()) < 60*time.Minute {
+			if time.Now().Sub(fileInfo.ModTime()) < deltaInMins*time.Minute {
 				fmt.Printf("+ Copying %s to Dropbox\n", fileInfo.Name())
 				pdfFiles <- path
 			}
