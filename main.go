@@ -15,7 +15,7 @@ import (
 
 func main() {
 	fmt.Println()
-	fmt.Println("Kopieren aller konvertierten Pdfs der letzten Stunde von Calibre nach Dropbox")
+	fmt.Println("Kopieren aller konvertierten Pdfs der x Minuten von Calibre nach Dropbox")
 	fmt.Println()
 	fmt.Println("Bitte Zielordner in Dropbox angeben:")
 	reader := bufio.NewReader(os.Stdin)
